@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "nebinfra",
+  "description": "NebInfra platform plugins for Claude Code",
+  "owner": {
+    "name": "NebInfra",
+    "email": "platform@nebinfra.com"
+  },
+  "plugins": [
+    {
+      "name": "nebguard",
+      "description": "AI guardrails engine for Claude Code",
+      "author": {
+        "name": "NebInfra",
+        "email": "platform@nebinfra.com"
+      },
+      "source": "./plugins/nebguard",
+      "category": "development",
+      "homepage": "https://nebinfra.com"
+    }
+  ]
+}
