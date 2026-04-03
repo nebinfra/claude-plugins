@@ -1,0 +1,14 @@
+#!/bin/sh
+# Wrapper script — delegates to the installed nebguard binary.
+# Committed to git so marketplace syncs preserve it. The actual binary
+# lives at ~/.claude/bin/nebguard (installed by `nebguard setup`).
+set -e
+
+BINARY="$HOME/.claude/bin/nebguard"
+
+if [ ! -x "$BINARY" ]; then
+  echo "[nebguard] binary not found at $BINARY — run 'nebguard setup' to install" >&2
+  exit 0  # exit 0 so hooks don't block Claude
+fi
+
+exec "$BINARY" "$@"
