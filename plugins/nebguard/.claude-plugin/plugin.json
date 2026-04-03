@@ -1,7 +1,7 @@
 {
   "name": "nebguard",
   "description": "AI guardrails engine for Claude Code — compiled Go binary with embedded skills, agents, playbooks, and decision criteria. Zero IP on disk between sessions.",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "hooks": {
     "PreToolUse": [
       {
@@ -15,7 +15,7 @@
         ]
       },
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
           {
             "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard pre-tool-use --matcher edit",
@@ -30,7 +30,27 @@
         "matcher": "Bash",
         "hooks": [
           {
-            "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard post-tool-use",
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard post-tool-use --matcher bash",
+            "timeout": 5,
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard post-tool-use --matcher edit",
+            "timeout": 5,
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard post-tool-use --matcher skill",
             "timeout": 5,
             "type": "command"
           }
@@ -53,7 +73,7 @@
         "hooks": [
           {
             "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard session end",
-            "timeout": 10,
+            "timeout": 15,
             "type": "command"
           }
         ]
@@ -64,7 +84,7 @@
         "hooks": [
           {
             "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard stop",
-            "timeout": 10,
+            "timeout": 15,
             "type": "command"
           }
         ]
@@ -76,6 +96,17 @@
           {
             "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard prompt",
             "timeout": 5,
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard pre-compact",
+            "timeout": 10,
             "type": "command"
           }
         ]
