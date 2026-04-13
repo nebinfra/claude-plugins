@@ -4,19 +4,31 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard pre-tool-use --matcher bash", "timeout": 5 }
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard pre-tool-use", "timeout": 5 }
         ]
       },
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard pre-tool-use --matcher edit", "timeout": 5 }
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard pre-tool-use", "timeout": 5 }
         ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard post-tool-use", "timeout": 5 }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard post-tool-use", "timeout": 5 }
+        ]
+      },
+      {
+        "matcher": "Skill",
         "hooks": [
           { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard post-tool-use", "timeout": 5 }
         ]
@@ -32,14 +44,14 @@
     "SessionEnd": [
       {
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard session end", "timeout": 10 }
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard session end", "timeout": 15 }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard stop", "timeout": 10 }
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard stop", "timeout": 15 }
         ]
       }
     ],
