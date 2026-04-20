@@ -67,6 +67,13 @@
         ]
       }
     ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/nebguard subagent-stop", "timeout": 10 }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
