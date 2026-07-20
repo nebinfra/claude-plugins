@@ -1,0 +1,21 @@
+{
+  "name": "nebinfra",
+  "owner": {
+    "name": "NebInfra",
+    "email": "platform@nebinfra.com"
+  },
+  "plugins": [
+    {
+      "name": "nebguard",
+      "source": "./plugins/nebguard",
+      "category": "development",
+      "homepage": "https://nebinfra.com"
+    },
+    {
+      "name": "nebcore-ai",
+      "source": "./plugins/nebcore-ai",
+      "category": "development",
+      "homepage": "https://nebinfra.com"
+    }
+  ]
+}
