@@ -1,0 +1,56 @@
+#!/bin/sh
+# NebGuard plugin wrapper. Delegates to the installed nebguard binary at
+# ~/.claude/bin/nebguard (installed by `nebguard setup`; committed to git so
+# marketplace syncs preserve it).
+#
+# It never downloads a binary: installing nebguard is a deliberate user action
+# gated on a signup/license step, so a silent download would be non-functional.
+# At the SessionStart hook only it warns (once per session) when the binary is
+# missing or older than this plugin's expected version. On every other hook it
+# stays silent and fails open (exit 0) so a missing or outdated binary never
+# blocks Claude or floods the transcript.
+set -e
+
+BINARY="$HOME/.claude/bin/nebguard"
+MANIFEST="${CLAUDE_PLUGIN_ROOT:-}/.claude-plugin/plugin.json"
+
+# hooks.json invokes this as `bin/nebguard session start` at SessionStart.
+is_session_start() {
+  [ "${1:-}" = "session" ] && [ "${2:-}" = "start" ]
+}
+
+# ver_lt A B: succeeds (0) when semver A < B. Pure POSIX sh because macOS
+# `sort` has no -V. Compares the first three dot components numerically; any
+# pre-release or build suffix is ignored.
+ver_lt() {
+  _lv=$(printf '%s' "${1:-0}" | sed 's/[^0-9.].*$//')
+  _rv=$(printf '%s' "${2:-0}" | sed 's/[^0-9.].*$//')
+  _vn=1
+  while [ "$_vn" -le 3 ]; do
+    _lc=$(printf '%s' "$_lv" | cut -d. -f"$_vn"); [ -n "$_lc" ] || _lc=0
+    _rc=$(printf '%s' "$_rv" | cut -d. -f"$_vn"); [ -n "$_rc" ] || _rc=0
+    if [ "$_lc" -lt "$_rc" ]; then return 0; fi
+    if [ "$_lc" -gt "$_rc" ]; then return 1; fi
+    _vn=$((_vn + 1))
+  done
+  return 1
+}
+
+if [ ! -x "$BINARY" ]; then
+  if is_session_start "$@"; then
+    echo "[nebguard] NebGuard is INACTIVE this session: binary not found at $BINARY." >&2
+    echo "[nebguard] Install the latest release, then run 'nebguard setup claude-code' (sign-in required)." >&2
+  fi
+  exit 0
+fi
+
+if is_session_start "$@"; then
+  _p=""
+  [ -f "$MANIFEST" ] && _p=$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$MANIFEST" | head -1)
+  _b=$("$BINARY" version 2>/dev/null | sed -n 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' | head -1)
+  if [ -n "$_p" ] && [ -n "$_b" ] && ver_lt "$_b" "$_p"; then
+    echo "[nebguard] Installed binary $_b is older than the expected $_p; update to the latest release and re-run 'nebguard setup claude-code'." >&2
+  fi
+fi
+
+exec "$BINARY" "$@"

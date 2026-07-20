@@ -1,0 +1,4 @@
+# Claude Code session artifacts
+.claude/audit/
+.claude/compaction-log.txt
+.claude/learnings/
