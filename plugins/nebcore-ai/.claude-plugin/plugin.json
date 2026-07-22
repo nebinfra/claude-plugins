@@ -1,5 +1,5 @@
 {
   "name": "nebcore-ai",
   "description": "NebCore AI tools over MCP (issues, k8s, gitops, cost, policy, compliance).",
-  "version": "6.12.1"
+  "version": "6.12.2"
 }
