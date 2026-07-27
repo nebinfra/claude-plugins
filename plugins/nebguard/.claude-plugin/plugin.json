@@ -1,5 +1,5 @@
 {
   "name": "nebguard",
   "description": "Policy-driven guardrails for AI coding assistants and autonomous agents.",
-  "version": "5.27.0"
+  "version": "5.27.1"
 }
