@@ -1,0 +1,20 @@
+{
+  "name": "nebinfra",
+  "interface": {
+    "displayName": "NebInfra"
+  },
+  "plugins": [
+    {
+      "name": "nebcore-ai",
+      "source": {
+        "source": "local",
+        "path": "./plugins/nebcore-ai"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

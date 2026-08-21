@@ -1,8 +1,19 @@
-# NebInfra Claude Code Marketplace
+# NebInfra Plugin Marketplace
 
-Plugins for the [Claude Code](https://docs.claude.com/claude-code) CLI, built and maintained by [NebInfra](https://nebinfra.com). Full product documentation: <https://docs.nebcore.ai>.
+Plugins for Codex and [Claude Code](https://docs.claude.com/claude-code), built
+and maintained by [NebInfra](https://nebinfra.com). Full product documentation:
+<https://docs.nebcore.ai>.
 
-## Add this marketplace
+## Add to Codex
+
+```bash
+codex plugin marketplace add nebinfra/claude-plugins --ref main
+```
+
+Open `/plugins`, choose NebInfra, and install `nebcore-ai`. Start a new session
+after installation.
+
+## Add to Claude Code
 
 In any Claude Code session, run:
 
@@ -30,5 +41,5 @@ Each plugin's directory contains its own README with usage and configuration det
 For bug reports, feature requests, and questions, open an issue at <https://github.com/nebinfra/claude-plugins/issues>. Please include:
 
 - Plugin name and version
-- Claude Code version (`claude --version`)
+- Codex CLI version (`codex --version`) or Claude Code version (`claude --version`)
 - A minimum reproducer or the exact command that triggered the problem
