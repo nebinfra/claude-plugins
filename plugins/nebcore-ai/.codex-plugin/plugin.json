@@ -1,0 +1,34 @@
+{
+  "name": "nebcore-ai",
+  "version": "6.17.1",
+  "description": "NebCore platform tools over the authenticated nebcli MCP bridge.",
+  "author": {
+    "name": "NebInfra",
+    "email": "platform@nebinfra.com",
+    "url": "https://nebinfra.com"
+  },
+  "homepage": "https://docs.nebcore.ai/nebcli",
+  "repository": "https://github.com/nebinfra/claude-plugins",
+  "keywords": [
+    "nebcore",
+    "infrastructure",
+    "mcp"
+  ],
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "NebCore AI",
+    "shortDescription": "Use authorized NebCore platform tools through nebcli.",
+    "longDescription": "Connect Codex to the NebCore MCP tool surface through your local nebcli login.",
+    "developerName": "NebInfra",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "List the NebCore MCP tools available to me.",
+      "Show my authorized Kubernetes clusters.",
+      "List my open NebCore issues."
+    ]
+  }
+}
