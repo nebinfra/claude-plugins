@@ -19,12 +19,16 @@ claude = json.loads((plugin / ".claude-plugin" / "plugin.json").read_text())
 codex = json.loads((plugin / ".codex-plugin" / "plugin.json").read_text())
 marketplace = json.loads((root / ".agents" / "plugins" / "marketplace.json").read_text())
 mcp = json.loads((plugin / ".mcp.json").read_text())
+hooks = json.loads((plugin / "codex" / "hooks.json").read_text())
 readme = (plugin / "README.md").read_text()
 
 assert codex["name"] == plugin.name
 assert codex["name"] == claude["name"]
 assert codex["version"] == claude["version"] == "6.17.1"
 assert codex["mcpServers"] == "./.mcp.json"
+assert codex["hooks"] == "./codex/hooks.json"
+assert "hooks" not in claude
+assert not (plugin / "hooks" / "hooks.json").exists()
 assert marketplace == {
     "name": "nebinfra",
     "interface": {"displayName": "NebInfra"},
@@ -41,7 +45,20 @@ assert mcp == {"mcpServers": {"nebcore-ai": {
 }}}
 assert not (plugin / "bin" / "nebcli").exists()
 
-serialized = json.dumps({"plugin": codex, "marketplace": marketplace, "mcp": mcp}).lower()
+session_start = hooks["hooks"]["SessionStart"]
+assert len(session_start) == 1
+assert session_start[0]["matcher"] == "startup"
+commands = session_start[0]["hooks"]
+assert commands == [{
+    "command": '/bin/bash "${PLUGIN_ROOT}/codex/session-start.sh"',
+    "commandWindows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command . ([IO.Path]::Combine($env:PLUGIN_ROOT,'codex','session-start.ps1'))",
+    "statusMessage": "Checking NebCore AI prerequisites",
+    "timeout": 15,
+    "type": "command",
+}]
+assert '"' not in commands[0]["commandWindows"]
+
+serialized = json.dumps({"plugin": codex, "marketplace": marketplace, "mcp": mcp, "hooks": hooks}).lower()
 for forbidden in ("access_token", "refresh_token", "api_key", "password", "bearer"):
     assert forbidden not in serialized
 for required in (
@@ -51,9 +68,17 @@ for required in (
     "## Upgrade in Codex",
     "## Remove from Codex",
     "## Authentication",
+    "## Host diagnostics",
     "## Troubleshooting",
-    "no platform URL configured: set PLATFORM_URL env or run `nebcli login`",
-    "generic MCP handshake failure",
+    "/plugins",
+    "/hooks",
+    "[features] hooks = false",
+    "allow_managed_hooks_only = true",
+    "does not hash or attest",
+    "16,384 bytes",
+    "12-second budget",
+    "15-second outer timeout",
+    "start a new session",
 ):
     assert required in readme
 
@@ -83,5 +108,7 @@ assert completed.returncode == 17
 assert calls.read_text() == "mcp\n"
 assert completed.stderr == "nebcore-test-mcp-invoked\n"
 PY
+
+"$REPO_ROOT/scripts/test-nebcore-ai-posix.sh"
 
 printf 'PASS: nebcore-ai Codex plugin contract\n'
