@@ -15,6 +15,7 @@
     "mcp"
   ],
   "mcpServers": "./.mcp.json",
+  "hooks": "./codex/hooks.json",
   "interface": {
     "displayName": "NebCore AI",
     "shortDescription": "Use authorized NebCore platform tools through nebcli.",
