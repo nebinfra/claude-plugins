@@ -1,6 +1,6 @@
 {
   "name": "nebcore-ai",
-  "version": "6.17.1",
+  "version": "6.19.0",
   "description": "NebCore platform tools over the authenticated nebcli MCP bridge.",
   "author": {
     "name": "NebInfra",
@@ -15,6 +15,7 @@
     "mcp"
   ],
   "mcpServers": "./.mcp.json",
+  "hooks": "./codex/hooks.json",
   "interface": {
     "displayName": "NebCore AI",
     "shortDescription": "Use authorized NebCore platform tools through nebcli.",
