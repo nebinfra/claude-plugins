@@ -1,0 +1,19 @@
+{
+  "description": "Checks local nebcli prerequisites before NebCore AI MCP startup.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "/bin/bash \"${PLUGIN_ROOT}/codex/session-start.sh\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command . ([IO.Path]::Combine($env:PLUGIN_ROOT,'codex','session-start.ps1'))",
+            "statusMessage": "Checking NebCore AI prerequisites",
+            "timeout": 15,
+            "type": "command"
+          }
+        ],
+        "matcher": "startup"
+      }
+    ]
+  }
+}
