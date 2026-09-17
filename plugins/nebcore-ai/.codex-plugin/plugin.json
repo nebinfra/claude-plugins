@@ -1,6 +1,6 @@
 {
   "name": "nebcore-ai",
-  "version": "6.19.0",
+  "version": "6.19.1",
   "description": "NebCore platform tools over the authenticated nebcli MCP bridge.",
   "author": {
     "name": "NebInfra",

@@ -6,6 +6,7 @@ TEST_ROOT=$(mktemp -d)
 trap 'rm -rf "$TEST_ROOT"' EXIT HUP INT TERM
 
 python3 - "$REPO_ROOT" "$TEST_ROOT" <<'PY'
+import base64
 import json
 import os
 import pathlib
@@ -24,7 +25,7 @@ readme = (plugin / "README.md").read_text()
 
 assert codex["name"] == plugin.name
 assert codex["name"] == claude["name"]
-assert codex["version"] == claude["version"] == "6.19.0"
+assert codex["version"] == claude["version"] == "6.19.1"
 assert codex["mcpServers"] == "./.mcp.json"
 assert codex["hooks"] == "./codex/hooks.json"
 assert "hooks" not in claude
@@ -51,7 +52,11 @@ assert session_start[0]["matcher"] == "startup"
 commands = session_start[0]["hooks"]
 assert commands == [{
     "command": '/bin/bash "${PLUGIN_ROOT}/codex/session-start.sh"',
-    "commandWindows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command . ([IO.Path]::Combine($env:PLUGIN_ROOT,'codex','session-start.ps1'))",
+    "commandWindows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand "
+    + base64.b64encode(
+        ". ([IO.Path]::Combine($env:PLUGIN_ROOT,'codex','session-start.ps1')); Invoke-NebcoreDiagnostic"
+        .encode("utf-16-le")
+    ).decode("ascii"),
     "statusMessage": "Checking NebCore AI prerequisites",
     "timeout": 15,
     "type": "command",
