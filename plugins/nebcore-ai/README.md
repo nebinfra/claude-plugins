@@ -36,6 +36,9 @@ configuration, `config.toml`, or the installed plugin cache.
 
 ## Upgrade in Codex
 
+Windows users need plugin 6.19.1 or newer for prerequisite diagnostics. Upgrade
+the plugin, review the changed command in `/hooks`, then start a new session.
+
 ```bash
 codex plugin marketplace upgrade nebinfra
 codex plugin add nebcore-ai@nebinfra

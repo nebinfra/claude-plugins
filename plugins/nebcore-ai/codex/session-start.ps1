@@ -30,7 +30,9 @@ public static class NebcoreHookSupervisor
     private const uint JobObjectLimitKillOnJobClose = 0x00002000;
     private const uint WaitObject0 = 0x00000000;
     private const uint WaitTimeout = 0x00000102;
-    private const int JobObjectExtendedLimitInformation = 9;
+    private const int JobObjectExtendedLimitInformationClass = 9;
+    private const int JobObjectAssociateCompletionPortClass = 7;
+    private const uint JobObjectMessageActiveProcessZero = 4;
     private static readonly IntPtr ProcThreadAttributeHandleList = new IntPtr(0x00020002);
 
     [StructLayout(LayoutKind.Sequential)]
@@ -163,6 +165,22 @@ public static class NebcoreHookSupervisor
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool SetInformationJobObject(IntPtr job, int infoClass,
         IntPtr info, uint infoLength);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JobObjectCompletionPort
+    {
+        public IntPtr CompletionKey;
+        public IntPtr CompletionPort;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr CreateIoCompletionPort(IntPtr file,
+        IntPtr existingPort, UIntPtr completionKey, uint concurrentThreads);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetQueuedCompletionStatus(IntPtr port,
+        out uint message, out UIntPtr completionKey, out IntPtr process,
+        uint milliseconds);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern bool CreateProcess(
@@ -342,6 +360,7 @@ public static class NebcoreHookSupervisor
         IntPtr stdinRead = IntPtr.Zero;
         IntPtr stdinWrite = IntPtr.Zero;
         IntPtr job = IntPtr.Zero;
+        IntPtr completionPort = IntPtr.Zero;
         IntPtr overflowEvent = IntPtr.Zero;
         IntPtr deadlineEvent = IntPtr.Zero;
         IntPtr attributeList = IntPtr.Zero;
@@ -349,6 +368,7 @@ public static class NebcoreHookSupervisor
         ProcessInformation process = new ProcessInformation();
         bool processCreated = false;
         bool assigned = false;
+        bool jobReaped = false;
         Task<Capture> stdoutTask = null;
         Task<Capture> stderrTask = null;
 
@@ -382,7 +402,7 @@ public static class NebcoreHookSupervisor
             try
             {
                 Marshal.StructureToPtr(limits, limitsPointer, false);
-                Require(SetInformationJobObject(job, JobObjectExtendedLimitInformation,
+                Require(SetInformationJobObject(job, JobObjectExtendedLimitInformationClass,
                     limitsPointer, checked((uint)limitsSize)), "SetInformationJobObject");
             }
             finally
@@ -390,6 +410,31 @@ public static class NebcoreHookSupervisor
                 Marshal.FreeHGlobal(limitsPointer);
             }
             Inject(failureStep, "job-configure");
+
+            completionPort = CreateIoCompletionPort(new IntPtr(-1),
+                IntPtr.Zero, UIntPtr.Zero, 1);
+            if (completionPort == IntPtr.Zero)
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "CreateIoCompletionPort");
+            }
+            Inject(failureStep, "completion-port");
+            var association = new JobObjectCompletionPort {
+                CompletionKey = job,
+                CompletionPort = completionPort
+            };
+            int associationSize = Marshal.SizeOf(typeof(JobObjectCompletionPort));
+            IntPtr associationPointer = Marshal.AllocHGlobal(associationSize);
+            try
+            {
+                Marshal.StructureToPtr(association, associationPointer, false);
+                Require(SetInformationJobObject(job, JobObjectAssociateCompletionPortClass,
+                    associationPointer, checked((uint)associationSize)), "associate completion port");
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(associationPointer);
+            }
+            Inject(failureStep, "completion-associate");
 
             overflowEvent = CreateEvent(IntPtr.Zero, true, false, null);
             if (overflowEvent == IntPtr.Zero)
@@ -526,6 +571,8 @@ public static class NebcoreHookSupervisor
                 process.Process,
                 RemainingMilliseconds(absoluteDeadlineTimestamp)) == WaitObject0,
                 "WaitForSingleObject reap");
+            WaitForJobEmpty(completionPort, job, absoluteDeadlineTimestamp);
+            jobReaped = true;
             Require(WaitReaders(stdoutTask, stderrTask, absoluteDeadlineTimestamp),
                 "pipe reader reap");
             Capture stdout = stdoutTask.Result;
@@ -544,7 +591,7 @@ public static class NebcoreHookSupervisor
                 ReadersCompleted = true
             };
         }
-        catch
+        catch (Exception failure)
         {
             if (assigned && job != IntPtr.Zero)
             {
@@ -559,6 +606,18 @@ public static class NebcoreHookSupervisor
                 WaitForSingleObject(
                     process.Process,
                     RemainingMilliseconds(absoluteDeadlineTimestamp));
+            }
+            if (assigned && !jobReaped)
+            {
+                try
+                {
+                    WaitForJobEmpty(completionPort, job, absoluteDeadlineTimestamp);
+                }
+                catch (Exception cleanupFailure)
+                {
+                    throw new AggregateException("supervisor and job cleanup failed",
+                        failure, cleanupFailure);
+                }
             }
             throw;
         }
@@ -588,6 +647,25 @@ public static class NebcoreHookSupervisor
             Close(ref deadlineEvent);
             Close(ref overflowEvent);
             Close(ref job);
+            Close(ref completionPort);
+        }
+    }
+
+    private static void WaitForJobEmpty(IntPtr completionPort, IntPtr job, long deadline)
+    {
+        for (;;)
+        {
+            RequireTime(deadline, "job descendant reap");
+            uint message;
+            UIntPtr key;
+            IntPtr process;
+            Require(GetQueuedCompletionStatus(completionPort, out message, out key,
+                out process, RemainingMilliseconds(deadline)), "job completion wait");
+            if (message == JobObjectMessageActiveProcessZero && key.ToUInt64() ==
+                unchecked((ulong)job.ToInt64()))
+            {
+                return;
+            }
         }
     }
 }
@@ -667,7 +745,7 @@ function Invoke-NebcoreDiagnostic {
         )
         $normalized = '{0}.{1}.{2}' -f $installed.Major, $installed.Minor, $installed.Build
         if ($installed -lt $script:NebcoreMinimumVersion) {
-            Write-Output "NebCore AI tools are unavailable because nebcli $normalized is older than the required 6.13.0. Upgrade nebcli, run ``nebcli login``, then start a new Codex session."
+            Write-Output "NebCore AI tools are unavailable because nebcli $normalized is older than the required 6.13.0. Upgrade nebcli, run nebcli login, then start a new Codex session."
             return
         }
 
