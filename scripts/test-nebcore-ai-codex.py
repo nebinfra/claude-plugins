@@ -561,12 +561,12 @@ def main() -> None:
         command = hooks["hooks"]["SessionStart"][0]["hooks"][0]
         if os.name == "nt":
             command["commandWindows"] = command["commandWindows"].replace(
-                "-Command ", "-Command $env:NEBCORE_COMMAND_FIXTURE=1;"
+                " -NoProfile ", " -NoLogo -NoProfile "
             )
         else:
             command["command"] = "NEBCORE_COMMAND_FIXTURE=1 " + command["command"]
         hooks_path.write_text(json.dumps(hooks, indent=2) + "\n", encoding="utf-8")
-        update_fixture_version(fixture_repo, "6.19.1")
+        update_fixture_version(fixture_repo, "6.19.2")
         commit_fixture(fixture_repo, "fixture: changed command")
         run([str(arguments.codex), "plugin", "add", PLUGIN_ID, "--json"], base_environment)
         server = AppServer(arguments.codex, base_environment)
@@ -581,7 +581,7 @@ def main() -> None:
             arguments.marketplace / "plugins/nebcore-ai/codex/hooks.json",
             hooks_path,
         )
-        update_fixture_version(fixture_repo, "6.19.2")
+        update_fixture_version(fixture_repo, "6.19.3")
         script_name = "session-start.ps1" if os.name == "nt" else "session-start.sh"
         source_script = fixture_repo / "plugins/nebcore-ai/codex" / script_name
         with source_script.open("a", encoding="utf-8") as handle:

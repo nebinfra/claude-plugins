@@ -176,7 +176,7 @@ try {
 
     foreach ($stage in @(
         'stdout-pipe', 'stderr-pipe', 'stdin-pipe', 'job-create',
-        'job-configure', 'overflow-event', 'attribute-size', 'attribute-init',
+        'job-configure', 'completion-port', 'completion-associate', 'overflow-event', 'attribute-size', 'attribute-init',
         'handle-list', 'attribute-update', 'process-create', 'job-assign',
         'readers-start', 'thread-resume'
     )) {
